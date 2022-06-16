@@ -1,0 +1,27 @@
+{
+    "appName": "BlazorTeamsApp",
+    "projectId": "e6edee7e-1565-42c6-820b-336279aa62f4",
+    "version": "2.1.0",
+    "isFromSample": false,
+    "solutionSettings": {
+        "name": "fx-solution-azure",
+        "version": "1.0.0",
+        "hostType": "Azure",
+        "azureResources": [],
+        "capabilities": [
+            "Tab"
+        ],
+        "activeResourcePlugins": [
+            "fx-resource-frontend-hosting",
+            "fx-resource-identity",
+            "fx-resource-aad-app-for-teams",
+            "fx-resource-local-debug",
+            "fx-resource-appstudio"
+        ]
+    },
+    "programmingLanguage": "csharp",
+    "pluginSettings": {
+        "projectFilePath": "C:\\Users\\sandervd\\source\\repos\\BlazorTeamsApp\\BlazorTeamsApp\\BlazorTeamsApp.csproj"
+    },
+    "isFirstTimeOpenProject": false
+}

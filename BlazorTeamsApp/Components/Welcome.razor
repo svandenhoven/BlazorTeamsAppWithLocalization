@@ -1,0 +1,140 @@
+﻿@using Microsoft.Extensions.Configuration
+@using Microsoft.AspNetCore.Hosting
+@using Microsoft.Extensions.Hosting
+@using Microsoft.Extensions.Localization
+@using System.Globalization
+
+@inject TeamsFx teamsfx
+@inject TeamsUserCredential teamsUserCredential
+@inject MicrosoftTeams MicrosoftTeams
+@inject IWebHostEnvironment HostEnvironment
+@inject IConfiguration Configuration
+@inject NavigationManager MyNavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IStringLocalizer<Welcome> L
+
+@if(isLoading)
+{
+    <div style="display: flex; justify-content: center; align-items: center; min-height: 100vh;">
+		<FluentProgressRing/>
+	</div>
+}
+else
+{
+    <div class="welcome page">
+        <div class="narrow page-padding">
+            <img src="hello.png" />
+            <h1 class="center">Congratulations@(!String.IsNullOrEmpty(userName) ? ", " + userName : "")!</h1>
+            <p class="center">Your app is running in your @(GetEnvironmentName())</p>
+            <FluentTabs style="width: 80%; justify-content: space-between; margin: 4rem auto;">
+                <FluentTab style="font-size: 14px; min-height: 32px;">1. Build your app locally</FluentTab>
+                <FluentTab>2. Publish and Deploy to the Cloud</FluentTab>
+                <FluentTab>3. Publish to Teams</FluentTab>
+                <FluentTabPanel>
+                    <div style="display:block; width:100%;">
+                        @if (isInTeams)
+                        {
+                            <CurrentUser UserName="@userName" />
+                        }
+                        <h1>Locale = @CultureInfo.CurrentCulture.EnglishName</h1>
+                        <h2>@L["WelcomeText"]</h2>
+                        <button @onclick="() => ButtonClicked()">@_buttonText</button>
+                        <button @onclick="() => SetCulture()">Set Culture</button>
+                    </div>
+                </FluentTabPanel>
+                <FluentTabPanel>
+                    <Deploy/>
+                </FluentTabPanel>
+                <FluentTabPanel>
+                    <Publish/>
+                </FluentTabPanel>
+            </FluentTabs>
+        </div>
+    </div>
+}
+
+@code {
+    string userName;
+    string errorMessage;
+    bool isInTeams;
+    bool isLoading = true;
+    string _buttonText = "Click me!";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var locale = CultureInfo.CurrentCulture.Name;
+        var baseUri = MyNavigationManager.Uri;
+        if(baseUri.Contains("?"))
+        {
+            var qp = baseUri.Split("?")[1];
+            locale = qp.Split("=")[1];
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(locale);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if(firstRender)
+        {
+            isInTeams = await MicrosoftTeams.IsInTeams();
+
+            if (isInTeams)
+            { 
+                var user = await teamsUserCredential.GetUserInfoAsync();
+                userName = user.DisplayName;
+            }
+            else
+            {
+                errorMessage = "Not running in Microsoft Teams.";
+            }
+
+            isLoading = false;
+            StateHasChanged();            
+        }
+    }
+
+    private void SetCulture()
+    {
+        var locale = CultureInfo.CurrentCulture.Name;
+        var baseUri = MyNavigationManager.Uri;
+        if(baseUri.Contains("?"))
+        {
+            //TODO: search op culture instead assuming it is first QSP
+            var qp = baseUri.Split("?")[1];
+            locale = qp.Split("=")[1];
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(locale);
+        }
+
+
+        var cultureEscaped = Uri.EscapeDataString(locale);
+        var uri = new Uri(MyNavigationManager.Uri).GetComponents(UriComponents.PathAndQuery, UriFormat.UriEscaped);
+        var uriEscaped = Uri.EscapeDataString(uri);
+
+        MyNavigationManager.NavigateTo(
+            $"Culture/Set?culture={cultureEscaped}&redirectUri={uriEscaped}",
+            forceLoad: true);
+    }
+
+    private void ButtonClicked()
+    {
+        var uri = MyNavigationManager.Uri;
+        if(uri.Contains("?"))
+        {
+            var qp = uri.Split("?")[1];
+            var locale = qp.Split("=")[1];
+            Thread.CurrentThread.CurrentCulture = new CultureInfo(locale);
+        }
+
+        var culture = CultureInfo.CurrentCulture.EnglishName;
+        _buttonText = culture;
+        StateHasChanged();
+    }
+
+    private string GetEnvironmentName()
+    {
+        return HostEnvironment.IsDevelopment() ? "local environment" : "Azure environment";
+    }
+}
+

@@ -1,0 +1,78 @@
+@page "/config"
+
+@using Microsoft.Extensions.Localization
+@using System.Globalization
+@using System.Web
+
+@inject MicrosoftTeams MicrosoftTeams;
+@inject NavigationManager NavigationManager;
+@inject IStringLocalizer<TabConfig> Loc
+@inject NavigationManager NavMan
+
+@{
+    SetCulture();
+}
+
+<div class="config page" id ="tab config">
+        <h1>Tab Configuration</h1>
+        @{
+            switch(CultureInfo.CurrentCulture.Name.ToLower())
+            {
+            case "nl":
+            case "nl-nl":
+                <h2>Nederlands</h2>
+                break;
+            case "en":
+            case "en-us":
+                <h2>English</h2>
+                break;
+            default:
+                break;
+            }
+
+            <h2>@Loc["DateField"] : @DateTime.Now.ToShortDateString()</h2>
+        }
+        <button @onclick="() => ButtonClicked()">@_buttonText</button>
+</div>
+
+@code {
+
+    private Guid _entityId = Guid.NewGuid();
+    private string _buttonText = "Click";
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+    }
+
+    private async Task ButtonClicked()
+    {
+        SetCulture();
+
+        _buttonText = CultureInfo.CurrentUICulture.EnglishName;
+        StateHasChanged();
+
+        var settings = new TeamsInstanceSettings
+        {
+            SuggestedDisplayName = "My Tab",
+            EntityId = _entityId.ToString(),
+            ContentUrl = $"{NavMan.BaseUri}/tab",
+            WebsiteUrl = $"{NavMan.BaseUri}/tab"
+        };
+
+        await MicrosoftTeams.InitializeAsync();
+        await MicrosoftTeams.RegisterOnSaveHandlerAsync(settings);
+    }
+
+    private void SetCulture()
+    {
+            var uri = new Uri(NavMan.Uri);
+            var queryString = HttpUtility.ParseQueryString(uri.Query);
+            var culture = queryString["culture"].ToString();
+            if(!string.IsNullOrEmpty(culture))
+            {
+                Thread.CurrentThread.CurrentCulture = new CultureInfo(culture);
+                Thread.CurrentThread.CurrentUICulture = new CultureInfo(culture);
+            }
+    }
+}
