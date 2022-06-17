@@ -1,0 +1,33 @@
+﻿@using Microsoft.Extensions.Localization
+@using System.Globalization
+@using BlazorTeamsApp.Utils
+
+@inherits ConfigBase
+
+ @{
+    //set culture based on the culture Query String Parameter.
+    //Needs do be set as .NET Blazor overrides culture in second rendering
+    LocalizationUtil.SetCulture(NavMan);
+}
+
+<div class="config page" id ="tab config">
+        <h1>@Loc["Title"]</h1>
+        @{
+            switch(CultureInfo.CurrentCulture.Name.ToLower())
+            {
+            case "nl":
+            case "nl-nl":
+                <h2>Nederlands</h2>
+                break;
+            case "en":
+            case "en-us":
+                <h2>English</h2>
+                break;
+            default:
+                break;
+            }
+
+            <h2>@Loc["DateField"] : @DateTime.Now.ToShortDateString()</h2>
+        }
+        <button @onclick="() => ButtonClicked()">@_buttonText</button>
+</div>
